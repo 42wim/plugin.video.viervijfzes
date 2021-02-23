@@ -1,4 +1,4 @@
-name: Kodi
+name: Kodi Addon-Check
 on:
   # Run action when pushed to master, or for commits in a pull request.
   push:
@@ -19,9 +19,20 @@ jobs:
       - name: Check out ${{ github.sha }} from repository ${{ github.repository }}
         uses: actions/checkout@v2
 
+      - name: Install dependencies
+        run: sudo apt-get install libxml2-utils
+
+      - name: Modify XML for Kodi 18
+        if: matrix.kodi-version == 'leia'
+        run: make modify-addonxml abi=2.26.0 && cat addon.xml
+
+      - name: Modify XML for Kodi 19
+        if: matrix.kodi-version == 'matrix'
+        run: make modify-addonxml abi=3.0.0 && cat addon.xml
+
       - name: Run kodi-addon-checker
         uses: xbmc/action-kodi-addon-checker@v1.2
         with:
           kodi-version: ${{ matrix.kodi-version }}
-          rewrite-for-matrix: true
+          rewrite-for-matrix: ${{ matrix.kodi-version == 'matrix' }}
           addon-id: ${{ github.event.repository.name }}
